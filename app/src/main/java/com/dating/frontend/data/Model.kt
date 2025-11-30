@@ -7,8 +7,17 @@ data class LoginResponse(
     val user: User
 )
 
+// Data class baru untuk Register
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val fullName: String,
+    val gender: String, // "MALE" atau "FEMALE"
+    val bio: String
+)
+
 data class User(
-    val id: String, // UUID dari backend
+    val id: String,
     val email: String,
     val fullName: String?,
     val gender: String?,
@@ -21,5 +30,5 @@ data class User(
 data class SwipeRequest(
     val myId: String,
     val targetId: String,
-    val action: String // "LIKE" atau "PASS"
+    val action: String
 )

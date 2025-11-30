@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dating.frontend.ui.FeedScreen
 import com.dating.frontend.ui.LoginScreen
+import com.dating.frontend.ui.RegisterScreen // Import RegisterScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +20,10 @@ class MainActivity : ComponentActivity() {
             NavHost(navController = navController, startDestination = "login") {
                 composable("login") {
                     LoginScreen(navController)
+                }
+                // Tambahkan rute register di sini
+                composable("register") {
+                    RegisterScreen(navController)
                 }
                 composable("feed") {
                     FeedScreen(navController)

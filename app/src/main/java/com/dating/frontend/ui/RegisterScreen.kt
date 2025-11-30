@@ -3,10 +3,11 @@ package com.dating.frontend.ui
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,11 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.dating.frontend.data.LoginRequest
+import com.dating.frontend.data.RegisterRequest
 import com.dating.frontend.data.RetrofitClient
-import com.dating.frontend.data.SessionManager
 import com.dating.frontend.ui.theme.DatingGradient
 import com.dating.frontend.ui.theme.PrimaryPink
 import com.dating.frontend.ui.theme.SecondaryOrange
@@ -29,14 +28,19 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun RegisterScreen(navController: NavController) {
+    var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var bio by remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf("MALE") }
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
 
-    // Background Gradient Full Screen
+    val scrollState = rememberScrollState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -44,31 +48,39 @@ fun LoginScreen(navController: NavController) {
                 brush = Brush.verticalGradient(
                     colors = listOf(SecondaryOrange.copy(alpha = 0.1f), PrimaryPink.copy(alpha = 0.1f))
                 )
-            ),
-        contentAlignment = Alignment.Center
+            )
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
+                .fillMaxSize()
+                .padding(32.dp)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Header / Logo Area
             Text(
-                text = "🔥 DatingApps",
-                style = MaterialTheme.typography.displaySmall.copy(
+                text = "Buat Akun Baru",
+                style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     brush = DatingGradient
                 )
             )
-            Text(
-                text = "Temukan pasanganmu sekarang",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(48.dp))
+            // Input Nama
+            OutlinedTextField(
+                value = fullName,
+                onValueChange = { fullName = it },
+                label = { Text("Nama Lengkap") },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = PrimaryPink) },
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryPink,
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Input Email
             OutlinedTextField(
@@ -83,7 +95,6 @@ fun LoginScreen(navController: NavController) {
                     unfocusedBorderColor = Color.LightGray
                 )
             )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // Input Password
@@ -100,34 +111,60 @@ fun LoginScreen(navController: NavController) {
                     unfocusedBorderColor = Color.LightGray
                 )
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Input Bio
+            OutlinedTextField(
+                value = bio,
+                onValueChange = { bio = it },
+                label = { Text("Bio Singkat") },
+                leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = PrimaryPink) },
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 3,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryPink,
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Pilihan Gender
+            Text("Jenis Kelamin", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                GenderOption(label = "Laki-laki", selected = gender == "MALE") { gender = "MALE" }
+                GenderOption(label = "Perempuan", selected = gender == "FEMALE") { gender = "FEMALE" }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Tombol Login
+            // Tombol Register
             Button(
                 onClick = {
                     scope.launch {
                         isLoading = true
                         try {
-                            val response = RetrofitClient.api.login(LoginRequest(email, password))
-                            // Simpan sesi
-                            SessionManager.jwtToken = response.token
-                            SessionManager.currentUser = response.user
-
-                            Toast.makeText(context, "Welcome back, ${response.user.fullName}!", Toast.LENGTH_SHORT).show()
-
-                            // Pindah ke halaman Feed
-                            navController.navigate("feed") {
-                                popUpTo("login") { inclusive = true }
-                            }
+                            val request = RegisterRequest(
+                                email = email,
+                                password = password,
+                                fullName = fullName,
+                                gender = gender,
+                                bio = bio
+                            )
+                            RetrofitClient.api.register(request)
+                            Toast.makeText(context, "Registrasi Berhasil! Silakan Login.", Toast.LENGTH_SHORT).show()
+                            navController.navigateUp()
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Login Gagal: ${e.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Registrasi Gagal: ${e.message}", Toast.LENGTH_LONG).show()
                         } finally {
                             isLoading = false
                         }
                     }
                 },
-                enabled = !isLoading,
+                enabled = !isLoading && email.isNotEmpty() && password.isNotEmpty() && fullName.isNotEmpty(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -135,7 +172,6 @@ fun LoginScreen(navController: NavController) {
                 contentPadding = PaddingValues(),
                 shape = RoundedCornerShape(24.dp)
             ) {
-                // Gradient Button Background
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -146,21 +182,32 @@ fun LoginScreen(navController: NavController) {
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("LOGIN", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("DAFTAR SEKARANG", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Tombol ke Halaman Register
-            TextButton(onClick = { navController.navigate("register") }) {
-                Text(
-                    text = "Belum punya akun? Daftar",
-                    color = PrimaryPink,
-                    fontWeight = FontWeight.SemiBold
-                )
+            TextButton(onClick = { navController.navigateUp() }) {
+                Text("Sudah punya akun? Login di sini", color = PrimaryPink)
             }
         }
+    }
+}
+
+// Komponen Gender Button
+@Composable
+fun GenderOption(label: String, selected: Boolean, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) PrimaryPink else Color.LightGray.copy(alpha = 0.3f),
+            contentColor = if (selected) Color.White else Color.Black
+        ),
+        shape = RoundedCornerShape(50),
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Text(text = label)
     }
 }

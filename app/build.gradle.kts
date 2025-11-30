@@ -70,4 +70,6 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    // app/build.gradle.kts (di bagian dependencies)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0") // Cek versi terbaru
 }
